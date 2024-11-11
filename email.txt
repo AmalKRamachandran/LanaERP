@@ -1,0 +1,44 @@
+ public void SendEmail(string emailAddress, string body, string subject)
+        {
+            try
+            {
+                string email_host = string.Empty;  string Password = string.Empty; string Username = string.Empty; string email_Password = string.Empty; string SmtpServer = string.Empty;
+                string email_host_user = string.Empty; int email_port = 0;string Type = "1"; string Name = string.Empty;
+                string sqlCommand123 = "SELECT [EsGUID], [Type], [SmtpServer], [Port], [Security], [Username], [Password], [FromMail], [Name] FROM cEmailSettings";
+                var dt1 = _dbHelper.ExecuteDataTable(sqlCommand123, CommandType.Text);
+                if (dt1.Rows.Count > 0)
+                {
+                    Type = dt1.Rows[0]["Type"].ToString();
+                    email_port = Convert.ToInt32( dt1.Rows[0]["Port"].ToString());
+                    email_host = dt1.Rows[0]["FromMail"].ToString();
+                    Username = dt1.Rows[0]["Username"].ToString();
+                    Password = dt1.Rows[0]["Password"].ToString();
+                    SmtpServer= dt1.Rows[0]["SmtpServer"].ToString();
+                    Name = dt1.Rows[0]["Name"].ToString();
+                }
+                if (Type == "1")
+                {
+                    var client = new RestClient("https://send.api.mailtrap.io/api/send");
+                    var request = new RestRequest();
+                    request.AddHeader("Authorization", "Bearer "+Password);
+                    request.AddHeader("Content-Type", "application/json");
+                    request.AddParameter("application/json", "{\"from\":{\"email\":\""+email_host+"\",\"name\":\""+ Name + "\"},\"to\":[{\"email\":\"" + emailAddress + "\"}],\"subject\":\"" + subject + "\",\"text\":\"" + body + "\",\"category\":\"Integration Test\"}", ParameterType.RequestBody);
+                    var response = client.Post(request);
+                    //System.Console.WriteLine(response.Content);
+                }
+                else
+ 		{
+ 		   var client = new SmtpClient(SmtpServer, email_port)
+                    {
+                        Credentials = new NetworkCredential(Username, Password),
+                        EnableSsl = true
+                    };
+                    client.Send(email_host, emailAddress, subject, body);
+                   
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
